@@ -1,0 +1,43 @@
+import os
+from pytube import YouTube
+from yt_dlp import YoutubeDL
+
+def download_video(url, save_path='./downloads'):
+    try:
+        # 创建保存目录
+        os.makedirs(save_path, exist_ok=True)
+
+        # 尝试使用pytube（适用于YouTube）
+        if 'youtube.com' in url or 'youtu.be' in url:
+            yt = YouTube(url)
+            stream = yt.streams.get_highest_resolution()
+            print(f"正在下载: {yt.title}")
+            stream.download(output_path=save_path)
+            return True
+
+        # 使用yt-dlp处理其他平台
+        ydl_opts = {
+            'outtmpl': os.path.join(save_path, '%(title)s.%(ext)s'),
+            'format': 'bestvideo+bestaudio/best',
+            'merge_output_format': 'mp4',
+            'quiet': True
+        }
+
+        with YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+            print(f"正在下载: {info_dict.get('title', '未知标题')}")
+            ydl.download([url])
+            return True
+
+    except Exception as e:
+        print(f"下载失败: {str(e)}")
+        return False
+
+if __name__ == "__main__":
+    video_url = input("请输入视频URL: ")
+    save_path = input("输入保存路径（默认./downloads）: ") or './downloads'
+    
+    if download_video(video_url, save_path):
+        print("下载成功！")
+    else:
+        print("下载失败，请检查URL和网络连接")
